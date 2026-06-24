@@ -2,161 +2,103 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Grafiti Kacisi</title>
+<title>3D Grafiti Kacisi</title>
 <style>
-body {
-margin:0
-overflow:hidden
-background:#1a1a1a
-display:flex
-justify-content:center
-align-items:center
-height:100vh
-}
-#game {
-background:#333
-border:4px solid #555
-display:block
-}
-#ui {
-position:absolute
-top:10px
-right:10px
-color:white
-font-family:Arial
-font-size:20px
-text-align:right
-pointer-events:none
-}
-#overlay {
-position:absolute
-display:none
-flex-direction:column
-align-items:center
-justify-content:center
-background:rgba(0,0,0,0.8)
-width:400px
-height:700px
-color:white
-font-family:Arial
-text-align:center
-}
-button {
-padding:10px 20px
-font-size:18px
-cursor:pointer
-margin-top:20px
-}
+body { margin:0; background:#000; display:flex; justify-content:center; align-items:center; height:100vh; overflow:hidden; }
+#gameContainer { position:relative; width:400px; height:700px; border:4px solid #555; background:#222; }
+#ui { position:absolute; top:10px; right:10px; color:white; font-family:Arial; text-align:right; pointer-events:none; }
+#overlay { position:absolute; top:0; left:0; width:100%; height:100%; display:none; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,0.9); color:white; }
+button { padding:10px 20px; font-size:18px; cursor:pointer; background:#e74c3c; border:none; color:white; border-radius:5px; }
 </style>
 </head>
 <body>
 
-<div id="ui">
-<div>Skor 0</div>
-<div>Altin 0</div>
+<div id="gameContainer">
+    <canvas id="game" width="400" height="700"></canvas>
+    <div id="ui">
+        <div id="score">Skor 0</div>
+        <div id="gold">Altin 0</div>
+    </div>
+    <div id="overlay">
+        <h1>YAKALANDIN</h1>
+        <button onclick="location.reload()">Tekrar Dene</button>
+    </div>
 </div>
-
-<div id="overlay">
-<h1>Kaybettiniz</h1>
-<p id="finalScore"></p>
-<button onclick="location.reload()">Tekrar Dene</button>
-</div>
-
-<canvas id="game" width="400" height="700"></canvas>
 
 <script>
-
 const canvas = document.getElementById("game")
 const ctx = canvas.getContext("2d")
-const ui = document.getElementById("ui")
-const overlay = document.getElementById("overlay")
 
 let lane = 1
 let score = 0
 let gold = 0
 let gameOver = false
-const lanes = [80, 200, 320]
+let objects = []
 
-const player = { x: lanes[1], y: 580, w: 40, h: 60 }
-const obstacles = []
-const coins = []
-
-function spawnEntities() {
-if(gameOver) return
-if(Math.random() < 0.02) {
-obstacles.push({ lane: Math.floor(Math.random()*3), y: -100, w: 60, h: 40 })
-}
-if(Math.random() < 0.01) {
-coins.push({ lane: Math.floor(Math.random()*3), y: -100, r: 10 })
-}
-}
+// Perspektif Ayarları
+const horizon = 200
+const vanishingPoint = { x: 200, y: horizon }
 
 document.addEventListener("keydown", (e) => {
-if(e.key === "ArrowLeft") lane = Math.max(0, lane - 1)
-if(e.key === "ArrowRight") lane = Math.min(2, lane + 1)
+    if(e.key === "ArrowLeft") lane = Math.max(0, lane - 1)
+    if(e.key === "ArrowRight") lane = Math.min(2, lane + 1)
 })
+
+function spawn() {
+    if(Math.random() < 0.03) {
+        objects.push({ type: 'obs', lane: Math.floor(Math.random()*3), z: 0 })
+    }
+}
 
 function update() {
-if(gameOver) return
-score++
-player.x = lanes[lane]
-
-obstacles.forEach((o, i) => {
-o.y += 7
-if(o.y > 700) obstacles.splice(i, 1)
-if(Math.abs(player.x - lanes[o.lane]) < 40 && Math.abs(player.y - o.y) < 50) {
-gameOver = true
-document.getElementById("finalScore").innerText = "Skor " + Math.floor(score/10) + " Altin " + gold
-overlay.style.display = "flex"
-}
-})
-
-coins.forEach((c, i) => {
-c.y += 7
-if(Math.abs(player.x - lanes[c.lane]) < 40 && Math.abs(player.y - c.y) < 40) {
-gold++
-coins.splice(i, 1)
-}
-})
-
-ui.innerHTML = "<div>Skor " + Math.floor(score/10) + "</div><div>Altin " + gold + "</div>"
-spawnEntities()
+    if(gameOver) return
+    score++
+    objects.forEach((o, i) => {
+        o.z += 0.02
+        if(o.z >= 1) objects.splice(i, 1)
+        
+        // Carpisma (z 0.8 ile 1.0 arasi derinlikte)
+        if(o.z > 0.8 && o.lane === lane) gameOver = true
+    })
+    if(gameOver) document.getElementById("overlay").style.display = "flex"
+    spawn()
 }
 
 function draw() {
-ctx.clearRect(0,0,400,700)
-ctx.fillStyle = "#444"
-ctx.fillRect(0,0,400,700)
+    ctx.clearRect(0, 0, 400, 700)
+    
+    // Yol (Perspektif)
+    ctx.fillStyle = "#333"
+    ctx.beginPath()
+    ctx.moveTo(200, 200)
+    ctx.lineTo(0, 700)
+    ctx.lineTo(400, 700)
+    ctx.fill()
 
-ctx.fillStyle = "blue"
-ctx.fillRect(player.x-20, player.y, 40, 60)
+    // Objeleri Ciz
+    objects.forEach(o => {
+        let scale = o.z * 1.5
+        let x = 200 + (o.lane - 1) * 150 * scale
+        let y = 200 + o.z * 500
+        
+        ctx.fillStyle = "#e74c3c"
+        ctx.fillRect(x - 20 * scale, y - 20 * scale, 40 * scale, 40 * scale)
+    })
 
-ctx.fillStyle = "red"
-obstacles.forEach(o => ctx.fillRect(lanes[o.lane]-30, o.y, 60, 40))
-
-ctx.fillStyle = "gold"
-coins.forEach(c => {
-ctx.beginPath()
-ctx.arc(lanes[c.lane], c.y, 10, 0, Math.PI*2)
-ctx.fill()
-})
-
-ctx.fillStyle = "gray"
-ctx.fillRect(0, 650, 400, 50)
-ctx.fillStyle = "black"
-ctx.font = "20px Arial"
-ctx.fillText("Polis ve kopek arkada", 100, 680)
+    // Karakter (Sabit)
+    ctx.fillStyle = "#3498db"
+    ctx.fillRect(180, 550, 40, 60)
+    
+    document.getElementById("score").innerText = "Skor " + Math.floor(score/10)
 }
 
 function loop() {
-update()
-draw()
-if(!gameOver) requestAnimationFrame(loop)
+    update()
+    draw()
+    if(!gameOver) requestAnimationFrame(loop)
 }
 
 loop()
-
 </script>
 </body>
-  </html>
-  
+</html>
