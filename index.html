@@ -3,71 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
-        #start { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 30px 60px; font-size: 30px; cursor: pointer; background: #0000FF; color: white; border: none; border-radius: 20px; }
-        #ui { position: absolute; top: 20px; left: 20px; color: white; font-size: 20px; display: none; }
+        body { margin: 0; overflow: hidden; background: #87CEEB; }
+        #ui { position: absolute; top: 20px; left: 20px; color: white; font-family: sans-serif; font-size: 24px; }
     </style>
 </head>
 <body>
     <div id="ui">Score: <span id="score">0</span></div>
-    <button id="start">START GAME</button>
     <script type="importmap">
         { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
     </script>
     <script type="module">
         import * as THREE from 'three';
 
-        let scene, camera, renderer, player, polis, score = 0, gameOn = false;
-        
-        scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x050505);
-        camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-        renderer = new THREE.WebGLRenderer({antialias: true});
+        let scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB); // Güneşli hava
+        let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        let renderer = new THREE.WebGLRenderer({antialias: true});
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
+        // Işık (Güneş etkisi)
+        let light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(5, 10, 5);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
         // Yol
-        const road = new THREE.Mesh(new THREE.PlaneGeometry(10, 2000), new THREE.MeshBasicMaterial({color: 0x222222}));
+        const road = new THREE.Mesh(new THREE.PlaneGeometry(10, 2000), new THREE.MeshLambertMaterial({color: 0x333333}));
         road.rotation.x = -Math.PI/2;
         scene.add(road);
 
-        // Oyuncu
-        player = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({color: 0x00FF00}));
-        player.position.set(0, 0.5, 0);
-        scene.add(player);
+        // Duvarlar (Şehir kenarları)
+        for(let i = 0; i < 50; i++) {
+            let wall = new THREE.Mesh(new THREE.BoxGeometry(2, 5, 2), new THREE.MeshLambertMaterial({color: 0x8B4513}));
+            wall.position.set(7, 2.5, -i * 20);
+            scene.add(wall);
+            let wall2 = new THREE.Mesh(new THREE.BoxGeometry(2, 5, 2), new THREE.MeshLambertMaterial({color: 0x8B4513}));
+            wall2.position.set(-7, 2.5, -i * 20);
+            scene.add(wall2);
+        }
 
-        // Polis (Mavi)
-        polis = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), new THREE.MeshBasicMaterial({color: 0x0000FF}));
-        polis.position.set(0, 0.6, 5);
-        scene.add(polis);
+        // Oyuncu
+        let playerGroup = new THREE.Group();
+        playerGroup.add(new THREE.Mesh(new THREE.BoxGeometry(0.5, 1, 0.3), new THREE.MeshLambertMaterial({color: 0x00FF00})));
+        scene.add(playerGroup);
+
+        // Polis Arabası
+        let carGroup = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.5, 2), new THREE.MeshLambertMaterial({color: 0x0000FF}));
+        carGroup.position.set(0, 0.4, 5);
+        scene.add(carGroup);
 
         camera.position.set(0, 3, 8);
-        camera.lookAt(0, 0, -20);
+        camera.lookAt(0, 0, -10);
 
-        // Kontroller
         window.addEventListener('keydown', (e) => {
-            if(e.key === 'ArrowLeft' && player.position.x > -4) player.position.x -= 2;
-            if(e.key === 'ArrowRight' && player.position.x < 4) player.position.x += 2;
+            if(e.key === 'ArrowLeft' && playerGroup.position.x > -4) playerGroup.position.x -= 2;
+            if(e.key === 'ArrowRight' && playerGroup.position.x < 4) playerGroup.position.x += 2;
         });
-
-        document.getElementById('start').onclick = (e) => {
-            e.target.style.display = 'none';
-            document.getElementById('ui').style.display = 'block';
-            gameOn = true;
-        };
 
         function animate() {
             requestAnimationFrame(animate);
-            if(gameOn) {
-                score++;
-                document.getElementById('score').innerText = Math.floor(score/10);
-                // Polis yavaşça yaklaşıyor
-                polis.position.z -= 0.005;
-                if(polis.position.z < player.position.z + 2) {
-                    alert("YAKALANDIN!");
-                    location.reload();
-                }
-            }
+            carGroup.position.z -= 0.02; // Polis kovalar
             renderer.render(scene, camera);
         }
         animate();
