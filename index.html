@@ -3,86 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        body { margin: 0; overflow: hidden; font-family: Arial; }
-        #menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; color: white; }
-        #skorTablosu { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); color: white; padding: 15px; border-radius: 10px; z-index: 5; display: none; }
-        button { padding: 20px 40px; font-size: 24px; cursor: pointer; }
+        body { margin: 0; overflow: hidden; background: #000; }
+        #start { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 30px 60px; font-size: 30px; cursor: pointer; background: #0000FF; color: white; border: none; border-radius: 20px; }
     </style>
 </head>
 <body>
-    <div id="skorTablosu">Altın: <span id="altinSayisi">0</span> | Engel: <span id="engelSayisi">0</span></div>
-    <div id="menu">
-        <h1 style="color:red">POLİS PEŞİNDE</h1>
-        <button onclick="baslat()">BAŞLAT</button>
-    </div>
+    <button id="start">START GAME</button>
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+    </script>
     <script type="module">
-        import * as THREE from 'https://cdn.skypack.dev/three';
-
-        let oyunBasladi = false;
-        let altinSay = 0; let engelSay = 0;
-
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x111111);
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({antialias: true});
+        import * as THREE from 'three';
+        let scene, camera, renderer, polis, gameOn = false;
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a1a);
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
-
-        const road = new THREE.Mesh(new THREE.PlaneGeometry(10, 2000), new THREE.MeshBasicMaterial({color: 0x222222}));
-        road.rotation.x = -Math.PI / 2;
-        scene.add(road);
-
-        const player = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({color: 0x00ff00}));
-        player.position.set(0, 0.5, 0);
-        scene.add(player);
-
-        // Polis (Arkada duran mavi kutu)
-        const polis = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), new THREE.MeshBasicMaterial({color: 0x0000ff}));
-        polis.position.set(0, 0.6, 3);
+        polis = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({color: 0x0000FF}));
+        polis.position.set(0, 0, -5);
         scene.add(polis);
-
-        const obstacle = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({color: 0xff0000}));
-        obstacle.position.set(0, 0.5, -20);
-        scene.add(obstacle);
-
-        const altin = new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshBasicMaterial({color: 0xffff00}));
-        altin.position.set(2, 0.5, -15);
-        scene.add(altin);
-
-        camera.position.set(0, 3, 5);
-
-        window.baslat = () => { document.getElementById('menu').style.display = 'none'; document.getElementById('skorTablosu').style.display = 'block'; oyunBasladi = true; };
-
-        window.addEventListener('keydown', (e) => {
-            if(e.key === "ArrowLeft" && player.position.x > -3) player.position.x -= 2;
-            if(e.key === "ArrowRight" && player.position.x < 3) player.position.x += 2;
-        });
-
+        camera.position.set(0, 0, 0);
+        document.getElementById('start').onclick = (e) => { e.target.style.display = 'none'; gameOn = true; };
         function animate() {
             requestAnimationFrame(animate);
-            if (oyunBasladi) {
-                obstacle.position.z += 0.4;
-                altin.position.z += 0.4;
-                
-                // Polis yavaşça yaklaşıyor
-                polis.position.z -= 0.001; 
-
-                if (obstacle.position.z > 5) {
-                    obstacle.position.z = -30;
-                    obstacle.position.x = (Math.floor(Math.random() * 3) - 1) * 2;
-                    engelSay++;
-                    document.getElementById('engelSayisi').innerText = engelSay;
-                }
-
-                if (Math.abs(player.position.z - obstacle.position.z) < 1 && Math.abs(player.position.x - obstacle.position.x) < 1) {
-                    alert("YAKALANDIN!"); location.reload();
-                }
-
-                if (Math.abs(player.position.z - altin.position.z) < 1 && Math.abs(player.position.x - altin.position.x) < 1) {
-                    altinSay++; document.getElementById('altinSayisi').innerText = altinSay;
-                    altin.position.z = -40; altin.position.x = (Math.floor(Math.random() * 3) - 1) * 2;
-                }
-            }
+            if(gameOn) polis.rotation.y += 0.05;
             renderer.render(scene, camera);
         }
         animate();
