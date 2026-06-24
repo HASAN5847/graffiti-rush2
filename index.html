@@ -3,32 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        body { margin: 0; overflow: hidden; background: #000; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
         #start { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 30px 60px; font-size: 30px; cursor: pointer; background: #0000FF; color: white; border: none; border-radius: 20px; }
+        #ui { position: absolute; top: 20px; left: 20px; color: white; font-size: 20px; display: none; }
     </style>
 </head>
 <body>
+    <div id="ui">Score: <span id="score">0</span></div>
     <button id="start">START GAME</button>
     <script type="importmap">
         { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
     </script>
     <script type="module">
         import * as THREE from 'three';
-        let scene, camera, renderer, polis, gameOn = false;
+
+        let scene, camera, renderer, player, polis, score = 0, gameOn = false;
+        
         scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x1a1a1a);
+        scene.background = new THREE.Color(0x050505);
         camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-        renderer = new THREE.WebGLRenderer();
+        renderer = new THREE.WebGLRenderer({antialias: true});
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
-        polis = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({color: 0x0000FF}));
-        polis.position.set(0, 0, -5);
+
+        // Yol
+        const road = new THREE.Mesh(new THREE.PlaneGeometry(10, 2000), new THREE.MeshBasicMaterial({color: 0x222222}));
+        road.rotation.x = -Math.PI/2;
+        scene.add(road);
+
+        // Oyuncu
+        player = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({color: 0x00FF00}));
+        player.position.set(0, 0.5, 0);
+        scene.add(player);
+
+        // Polis (Mavi)
+        polis = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), new THREE.MeshBasicMaterial({color: 0x0000FF}));
+        polis.position.set(0, 0.6, 5);
         scene.add(polis);
-        camera.position.set(0, 0, 0);
-        document.getElementById('start').onclick = (e) => { e.target.style.display = 'none'; gameOn = true; };
+
+        camera.position.set(0, 3, 8);
+        camera.lookAt(0, 0, -20);
+
+        // Kontroller
+        window.addEventListener('keydown', (e) => {
+            if(e.key === 'ArrowLeft' && player.position.x > -4) player.position.x -= 2;
+            if(e.key === 'ArrowRight' && player.position.x < 4) player.position.x += 2;
+        });
+
+        document.getElementById('start').onclick = (e) => {
+            e.target.style.display = 'none';
+            document.getElementById('ui').style.display = 'block';
+            gameOn = true;
+        };
+
         function animate() {
             requestAnimationFrame(animate);
-            if(gameOn) polis.rotation.y += 0.05;
+            if(gameOn) {
+                score++;
+                document.getElementById('score').innerText = Math.floor(score/10);
+                // Polis yavaşça yaklaşıyor
+                polis.position.z -= 0.005;
+                if(polis.position.z < player.position.z + 2) {
+                    alert("YAKALANDIN!");
+                    location.reload();
+                }
+            }
             renderer.render(scene, camera);
         }
         animate();
