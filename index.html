@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Grafiti Kacisi</title>
+<style>
+body {
+margin:0
+overflow:hidden
+background:#1a1a1a
+display:flex
+justify-content:center
+align-items:center
+height:100vh
+}
+#game {
+background:#333
+border:4px solid #555
+display:block
+}
+#ui {
+position:absolute
+top:10px
+right:10px
+color:white
+font-family:Arial
+font-size:20px
+text-align:right
+pointer-events:none
+}
+#overlay {
+position:absolute
+display:none
+flex-direction:column
+align-items:center
+justify-content:center
+background:rgba(0,0,0,0.8)
+width:400px
+height:700px
+color:white
+font-family:Arial
+text-align:center
+}
+button {
+padding:10px 20px
+font-size:18px
+cursor:pointer
+margin-top:20px
+}
+</style>
+</head>
+<body>
+
+<div id="ui">
+<div>Skor 0</div>
+<div>Altin 0</div>
+</div>
+
+<div id="overlay">
+<h1>Kaybettiniz</h1>
+<p id="finalScore"></p>
+<button onclick="location.reload()">Tekrar Dene</button>
+</div>
+
+<canvas id="game" width="400" height="700"></canvas>
+
+<script>
+
+const canvas = document.getElementById("game")
+const ctx = canvas.getContext("2d")
+const ui = document.getElementById("ui")
+const overlay = document.getElementById("overlay")
+
+let lane = 1
+let score = 0
+let gold = 0
+let gameOver = false
+const lanes = [80, 200, 320]
+
+const player = { x: lanes[1], y: 580, w: 40, h: 60 }
+const obstacles = []
+const coins = []
+
+function spawnEntities() {
+if(gameOver) return
+if(Math.random() < 0.02) {
+obstacles.push({ lane: Math.floor(Math.random()*3), y: -100, w: 60, h: 40 })
+}
+if(Math.random() < 0.01) {
+coins.push({ lane: Math.floor(Math.random()*3), y: -100, r: 10 })
+}
+}
+
+document.addEventListener("keydown", (e) => {
+if(e.key === "ArrowLeft") lane = Math.max(0, lane - 1)
+if(e.key === "ArrowRight") lane = Math.min(2, lane + 1)
+})
+
+function update() {
+if(gameOver) return
+score++
+player.x = lanes[lane]
+
+obstacles.forEach((o, i) => {
+o.y += 7
+if(o.y > 700) obstacles.splice(i, 1)
+if(Math.abs(player.x - lanes[o.lane]) < 40 && Math.abs(player.y - o.y) < 50) {
+gameOver = true
+document.getElementById("finalScore").innerText = "Skor " + Math.floor(score/10) + " Altin " + gold
+overlay.style.display = "flex"
+}
+})
+
+coins.forEach((c, i) => {
+c.y += 7
+if(Math.abs(player.x - lanes[c.lane]) < 40 && Math.abs(player.y - c.y) < 40) {
+gold++
+coins.splice(i, 1)
+}
+})
+
+ui.innerHTML = "<div>Skor " + Math.floor(score/10) + "</div><div>Altin " + gold + "</div>"
+spawnEntities()
+}
+
+function draw() {
+ctx.clearRect(0,0,400,700)
+ctx.fillStyle = "#444"
+ctx.fillRect(0,0,400,700)
+
+ctx.fillStyle = "blue"
+ctx.fillRect(player.x-20, player.y, 40, 60)
+
+ctx.fillStyle = "red"
+obstacles.forEach(o => ctx.fillRect(lanes[o.lane]-30, o.y, 60, 40))
+
+ctx.fillStyle = "gold"
+coins.forEach(c => {
+ctx.beginPath()
+ctx.arc(lanes[c.lane], c.y, 10, 0, Math.PI*2)
+ctx.fill()
+})
+
+ctx.fillStyle = "gray"
+ctx.fillRect(0, 650, 400, 50)
+ctx.fillStyle = "black"
+ctx.font = "20px Arial"
+ctx.fillText("Polis ve kopek arkada", 100, 680)
+}
+
+function loop() {
+update()
+draw()
+if(!gameOver) requestAnimationFrame(loop)
+}
+
+loop()
+
+</script>
+</body>
+  </html>
+  
