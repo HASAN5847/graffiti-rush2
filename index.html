@@ -12,24 +12,18 @@
     </script>
     <script type="module">
         import * as THREE from 'three';
-
         let scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87CEEB);
         let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         let renderer = new THREE.WebGLRenderer({antialias: true});
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
-
         scene.add(new THREE.AmbientLight(0xffffff, 1));
-
-        // Karakter
         let loader = new THREE.TextureLoader();
         let charTexture = loader.load('https://i.ibb.co/L5p0G7K/1000073711.jpg');
         let player = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 3), new THREE.MeshBasicMaterial({map: charTexture, transparent: true}));
         player.position.set(0, 1.5, 0);
         scene.add(player);
-
-        // Gelen Arabalar (Engeller)
         let obstacles = [];
         function createObstacle() {
             let obs = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1, 2), new THREE.MeshLambertMaterial({color: 0xFF0000}));
@@ -38,28 +32,22 @@
             obstacles.push(obs);
         }
         setInterval(createObstacle, 1000);
-
         window.addEventListener('keydown', (e) => {
             if(e.key === 'ArrowLeft' && player.position.x > -4) player.position.x -= 2;
             if(e.key === 'ArrowRight' && player.position.x < 4) player.position.x += 2;
         });
-
         camera.position.set(0, 3, 6);
         camera.lookAt(0, 2, -10);
-
         function animate() {
             requestAnimationFrame(animate);
-            
             obstacles.forEach(o => {
                 o.position.z += 0.5;
-                // Çarpışma kontrolü
                 if(Math.abs(o.position.z - player.position.z) < 1 && Math.abs(o.position.x - player.position.x) < 1) {
-                    alert("KAZA YAPDIN!");
+                    alert("KAZA YAPTIN!");
                     location.reload();
                 }
                 if(o.position.z > 5) o.position.z = -50;
             });
-
             player.rotation.x = Math.sin(Date.now() * 0.02) * 0.1;
             renderer.render(scene, camera);
         }
