@@ -2,9 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <style>
-        body { margin: 0; overflow: hidden; background: #87CEEB; }
-    </style>
+    <style> body { margin: 0; overflow: hidden; background: #87CEEB; } </style>
 </head>
 <body>
     <script type="importmap">
@@ -19,25 +17,30 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
         scene.add(new THREE.AmbientLight(0xffffff, 1));
+
         let loader = new THREE.TextureLoader();
-        let charTexture = loader.load('https://i.ibb.co/L5p0G7K/1000073711.jpg');
+        let charTexture = loader.load('1000073711.jpg'); 
         let player = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 3), new THREE.MeshBasicMaterial({map: charTexture, transparent: true}));
         player.position.set(0, 1.5, 0);
         scene.add(player);
+
         let obstacles = [];
         function createObstacle() {
-            let obs = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1, 2), new THREE.MeshLambertMaterial({color: 0xFF0000}));
+            let obs = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), new THREE.MeshLambertMaterial({color: 0xFF0000}));
             obs.position.set((Math.random() > 0.5 ? 2 : -2), 0.5, -50);
             scene.add(obs);
             obstacles.push(obs);
         }
         setInterval(createObstacle, 1000);
+
         window.addEventListener('keydown', (e) => {
-            if(e.key === 'ArrowLeft' && player.position.x > -4) player.position.x -= 2;
-            if(e.key === 'ArrowRight' && player.position.x < 4) player.position.x += 2;
+            if(e.key === 'ArrowLeft' && player.position.x > -2) player.position.x -= 2;
+            if(e.key === 'ArrowRight' && player.position.x < 2) player.position.x += 2;
         });
+
         camera.position.set(0, 3, 6);
-        camera.lookAt(0, 2, -10);
+        camera.lookAt(0, 1, -10);
+
         function animate() {
             requestAnimationFrame(animate);
             obstacles.forEach(o => {
@@ -47,7 +50,6 @@
                 }
                 if(o.position.z > 5) o.position.z = -50;
             });
-            player.rotation.x = Math.sin(Date.now() * 0.02) * 0.1;
             renderer.render(scene, camera);
         }
         animate();
