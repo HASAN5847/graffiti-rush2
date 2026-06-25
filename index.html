@@ -2,9 +2,25 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <style> body { margin: 0; overflow: hidden; background: #87CEEB; } </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style> 
+        body { margin: 0; overflow: hidden; background: #87CEEB; user-select: none; font-family: Arial, sans-serif; }
+        #menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; color: white; text-align: center; }
+        h1 { font-size: 40px; margin-bottom: 20px; text-shadow: 2px 2px 4px #000; }
+        #startBtn { padding: 20px 60px; font-size: 24px; cursor: pointer; background: #228B22; color: white; border: none; border-radius: 50px; font-weight: bold; border: 4px solid #fff; }
+        .btn { position: absolute; bottom: 30px; width: 90px; height: 90px; background: rgba(255,255,255,0.3); border-radius: 50%; border: 3px solid white; z-index: 50; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; font-weight: bold; }
+        #leftBtn { left: 30px; }
+        #rightBtn { right: 30px; }
+    </style>
 </head>
 <body>
+    <div id="menu">
+        <h1>CIFTLIK YARISI</h1>
+        <button id="startBtn">BASLA</button>
+    </div>
+    <div id="leftBtn" class="btn">SOL</div>
+    <div id="rightBtn" class="btn">SAG</div>
+    
     <script type="importmap">
         { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
     </script>
@@ -16,43 +32,62 @@
         let renderer = new THREE.WebGLRenderer({antialias: true});
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
-        scene.add(new THREE.AmbientLight(0xffffff, 1));
+        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
 
         let loader = new THREE.TextureLoader();
-        let charTexture = loader.load('1000073711.jpg'); 
-        let player = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 3), new THREE.MeshBasicMaterial({map: charTexture, transparent: true}));
-        player.position.set(0, 1.5, 0);
-        scene.add(player);
+        let grass = loader.load('https://threejs.org/examples/textures/grasslight-big.jpg');
+        let wood = loader.load('https://threejs.org/examples/textures/hardwood2_diffuse.jpg');
+        let hayTex = loader.load('https://threejs.org/examples/textures/crate.gif');
+
+        let horse = new THREE.Group();
+        let body = new THREE.Mesh(new THREE.BoxGeometry(1, 0.8, 2), new THREE.MeshLambertMaterial({color: 0x664422}));
+        horse.add(body);
+        horse.position.set(0, 0.5, 0);
+        scene.add(horse);
+
+        let ground = new THREE.Mesh(new THREE.PlaneGeometry(50, 2000), new THREE.MeshLambertMaterial({map: grass}));
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.z = -1000;
+        scene.add(ground);
+
+        let barns = [];
+        for(let i = 0; i < 20; i++) {
+            let b = new THREE.Mesh(new THREE.BoxGeometry(6, 6, 6), new THREE.MeshLambertMaterial({map: wood}));
+            b.position.set(12, 3, -i * 100);
+            scene.add(b);
+            barns.push(b);
+        }
 
         let obstacles = [];
         function createObstacle() {
-            let obs = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), new THREE.MeshLambertMaterial({color: 0xFF0000}));
-            obs.position.set((Math.random() > 0.5 ? 2 : -2), 0.5, -50);
-            scene.add(obs);
-            obstacles.push(obs);
+            let h = new THREE.Mesh(new THREE.BoxGeometry(2, 2, 2), new THREE.MeshLambertMaterial({map: hayTex}));
+            h.position.set((Math.random() > 0.5 ? 3 : -3), 1, -100);
+            scene.add(h);
+            obstacles.push(h);
         }
         setInterval(createObstacle, 1000);
 
-        window.addEventListener('keydown', (e) => {
-            if(e.key === 'ArrowLeft' && player.position.x > -2) player.position.x -= 2;
-            if(e.key === 'ArrowRight' && player.position.x < 2) player.position.x += 2;
-        });
+        function moveLeft() { if(horse.position.x > -4) horse.position.x -= 2; }
+        function moveRight() { if(horse.position.x < 4) horse.position.x += 2; }
 
-        camera.position.set(0, 3, 6);
-        camera.lookAt(0, 1, -10);
+        document.getElementById('leftBtn').addEventListener('touchstart', moveLeft);
+        document.getElementById('rightBtn').addEventListener('touchstart', moveRight);
 
         function animate() {
             requestAnimationFrame(animate);
+            barns.forEach(b => { b.position.z += 1; if(b.position.z > 50) b.position.z = -2000; });
             obstacles.forEach(o => {
-                o.position.z += 0.5;
-                if(Math.abs(o.position.z - player.position.z) < 1 && Math.abs(o.position.x - player.position.x) < 1) {
-                    location.reload();
-                }
-                if(o.position.z > 5) o.position.z = -50;
+                o.position.z += 1;
+                if(Math.abs(o.position.z - horse.position.z) < 1 && Math.abs(o.position.x - horse.position.x) < 1) location.reload();
+                if(o.position.z > 10) o.position.z = -100;
             });
             renderer.render(scene, camera);
         }
-        animate();
+
+        document.getElementById('startBtn').onclick = function() {
+            document.getElementById('menu').style.display = 'none';
+            animate();
+        };
     </script>
 </body>
 </html>
