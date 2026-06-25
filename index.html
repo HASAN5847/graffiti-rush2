@@ -1,80 +1,316 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <style> 
-        body { margin: 0; overflow: hidden; background: #87CEEB; user-select: none; }
-        #menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; color: white; }
-        #startBtn { padding: 20px 40px; font-size: 20px; background: #228B22; color: white; border: none; border-radius: 10px; cursor: pointer; }
-        .btn { position: absolute; bottom: 50px; width: 100px; height: 100px; background: rgba(255,255,255,0.3); border-radius: 50%; z-index: 500; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px; }
-        #leftBtn { left: 40px; }
-        #rightBtn { right: 40px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<style>
+body { margin:0; overflow:hidden; background:#87CEEB; user-select:none; font-family:Arial; }
+#menu { position:absolute; inset:0; background:rgba(0,0,0,0.6); display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; z-index:10; }
+#startBtn { padding:20px 60px; font-size:24px; border:none; border-radius:50px; background:#228B22; color:white; font-weight:bold; }
+.btn { position:absolute; bottom:50px; width:100px; height:100px; border-radius:50%; background:rgba(255,255,255,0.4); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; z-index:5; }
+#leftBtn { left:40px; }
+#rightBtn { right:40px; }
+#scoreBoard { position:absolute; top:20px; left:20px; color:white; font-size:24px; z-index:5; }
+#musicBtn { position:absolute; top:20px; right:20px; font-size:30px; background:none; border:none; }
+#gameOver { position:absolute; inset:0; background:rgba(0,0,0,0.8); display:none; flex-direction:column; align-items:center; justify-content:center; color:white; z-index:20; }
+</style>
+
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
+
 </head>
+
 <body>
-    <div id="menu">
-        <h1>CIFTLIK YARISI</h1>
-        <button id="startBtn">OYUNA BASLA</button>
-    </div>
-    <div id="leftBtn" class="btn">SOL</div>
-    <div id="rightBtn" class="btn">SAG</div>
+<div id="scoreBoard">SKOR 0</div>
+<button id="musicBtn">🔇</button>
+
+<div id="menu">
+<h1>CIFTLIK YARISI</h1>
+<button id="startBtn">BASLA</button>
+</div>
+
+<div id="leftBtn" class="btn">←</div>
+<div id="rightBtn" class="btn">→</div>
+
+<div id="gameOver">
+<h1>Oyun Bitti!</h1>
+<p id="finalScore"></p>
+<button id="restartBtn" style="padding:15px 40px; font-size:20px; background:#228B22; color:white; border:none; border-radius:50px;">Tekrar Oyna</button>
+</div>
+
+<script type="module">
+import * as THREE from "three";
+
+let scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87CEEB);
+
+let camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 1000);
+let renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0xffffff, 1));
+let directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight.position.set(10, 20, 5);
+scene.add(directionalLight);
+
+let audioCtx, musicEnabled=false, musicTimer, score=0, gameRunning=false, speed=2;
+
+const scoreBoard = document.getElementById('scoreBoard');
+const menu = document.getElementById('menu');
+const gameOverScreen = document.getElementById('gameOver');
+const finalScoreEl = document.getElementById('finalScore');
+const startBtn = document.getElementById('startBtn');
+const restartBtn = document.getElementById('restartBtn');
+const musicBtn = document.getElementById('musicBtn');
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
+
+// Audio
+function initAudio(){
+    if(!audioCtx){
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    audioCtx.resume();
+}
+
+function play(freq, t){
+    let o = audioCtx.createOscillator();
+    let g = audioCtx.createGain();
+    o.type="triangle";
+    o.frequency.value=freq;
+    o.connect(g); g.connect(audioCtx.destination);
+    g.gain.value=0.05;
+    o.start();
+    setTimeout(()=>o.stop(), t);
+}
+
+function coinSound(){
+    play(880,80);
+    setTimeout(()=>play(1320,80),60);
+}
+
+function crashSound(){
+    play(200,300);
+    setTimeout(()=>play(150,400),150);
+}
+
+// Zemin
+let ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(50,4000),
+    new THREE.MeshLambertMaterial({color:0x228B22})
+);
+ground.rotation.x = -Math.PI/2;
+ground.position.z = -1800;
+scene.add(ground);
+
+// At (daha güzel yapalım)
+let horse = new THREE.Group();
+let body = new THREE.Mesh(
+    new THREE.BoxGeometry(1.8,1.4,3.5),
+    new THREE.MeshLambertMaterial({color:0x8B4513})
+);
+body.position.y = 1;
+horse.add(body);
+
+let head = new THREE.Mesh(
+    new THREE.BoxGeometry(1.2,1.2,1.5),
+    new THREE.MeshLambertMaterial({color:0x8B4513})
+);
+head.position.set(0,1.8,1.8);
+horse.add(head);
+
+horse.position.y = 0.8;
+scene.add(horse);
+
+// Barnlar
+let barns=[];
+function createBarn(x, z){
+    let barn = new THREE.Group();
+    let main = new THREE.Mesh(
+        new THREE.BoxGeometry(7,7,8),
+        new THREE.MeshLambertMaterial({color:0x8B4513})
+    );
+    main.position.y = 3.5;
+    barn.add(main);
     
-    <script type="importmap">
-        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
-    </script>
-    <script type="module">
-        import * as THREE from 'three';
+    let roof = new THREE.Mesh(
+        new THREE.ConeGeometry(5,3,4),
+        new THREE.MeshLambertMaterial({color:0xB22222})
+    );
+    roof.position.y = 8;
+    barn.add(roof);
+    
+    barn.position.set(x,0,z);
+    scene.add(barn);
+    return barn;
+}
 
-        let scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB);
-        let camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 2000);
-        let renderer = new THREE.WebGLRenderer({antialias: true});
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
-        scene.add(new THREE.AmbientLight(0xffffff, 1));
+for(let i=0; i<15; i++){
+    let b = createBarn(i%2 ? -13 : 13, -i*180);
+    barns.push(b);
+}
 
-        let ground = new THREE.Mesh(new THREE.PlaneGeometry(100, 5000), new THREE.MeshLambertMaterial({color: 0x4B964B}));
-        ground.rotation.x = -Math.PI / 2;
-        ground.position.z = -2500;
-        scene.add(ground);
+// Coins
+let coins=[];
 
-        let horse = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 2), new THREE.MeshLambertMaterial({color: 0x664422}));
-        horse.position.set(0, 0.5, 0);
-        scene.add(horse);
+function spawnCoin(){
+    if(!gameRunning) return;
+    let c = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.8,0.8,0.3,16),
+        new THREE.MeshPhongMaterial({color:0xFFD700, emissive:0xFFD700, emissiveIntensity:0.4})
+    );
+    c.rotation.x = Math.PI/2;
+    c.position.set((Math.random()-0.5)*18, 2, -400);
+    scene.add(c);
+    coins.push(c);
+}
 
-        let barns = [];
-        for(let i = 0; i < 30; i++) {
-            let b = new THREE.Mesh(new THREE.BoxGeometry(8, 8, 8), new THREE.MeshLambertMaterial({color: 0x8B4513}));
-            b.position.set(i % 2 === 0 ? 15 : -15, 4, -i * 150);
-            scene.add(b);
-            barns.push(b);
+// Kontroller
+let keys = {};
+window.addEventListener('keydown', e => keys[e.key] = true);
+window.addEventListener('keyup', e => keys[e.key] = false);
+
+leftBtn.onpointerdown = e => { e.preventDefault(); keys['ArrowLeft'] = true; };
+rightBtn.onpointerdown = e => { e.preventDefault(); keys['ArrowRight'] = true; };
+leftBtn.onpointerup = () => keys['ArrowLeft'] = false;
+rightBtn.onpointerup = () => keys['ArrowRight'] = false;
+
+// Kamera
+camera.position.set(0, 8, 12);
+
+function resetGame(){
+    score = 0;
+    speed = 2;
+    scoreBoard.innerText = "SKOR 0";
+    horse.position.x = 0;
+    
+    barns.forEach((b,i) => b.position.z = -i*180);
+    coins.forEach(c => scene.remove(c));
+    coins = [];
+}
+
+function gameOver(){
+    gameRunning = false;
+    crashSound();
+    finalScoreEl.innerText = `Skorun: ${score}`;
+    gameOverScreen.style.display = "flex";
+}
+
+// Animate
+function animate(){
+    requestAnimationFrame(animate);
+    if(!gameRunning) {
+        renderer.render(scene, camera);
+        return;
+    }
+
+    // Hareket
+    if(keys['ArrowLeft'] || keys['a'] || keys['A']) {
+        if(horse.position.x > -12) horse.position.x -= 0.4;
+    }
+    if(keys['ArrowRight'] || keys['d'] || keys['D']) {
+        if(horse.position.x < 12) horse.position.x += 0.4;
+    }
+
+    // Barn hareket + collision
+    for(let b of barns){
+        b.position.z += speed;
+        if(b.position.z > 30){
+            b.position.z -= 2700;
         }
 
-        camera.position.set(0, 4, 6);
-        camera.lookAt(0, 1, -20);
-
-        // Hareket mantigini guncelledik
-        window.moveLeft = () => { if(horse.position.x > -6) horse.position.x -= 2; };
-        window.moveRight = () => { if(horse.position.x < 6) horse.position.x += 2; };
-
-        // Mobil icin en saglam dokunma olayi
-        document.getElementById('leftBtn').addEventListener('pointerdown', (e) => { e.preventDefault(); moveLeft(); });
-        document.getElementById('rightBtn').addEventListener('pointerdown', (e) => { e.preventDefault(); moveRight(); });
-
-        function animate() {
-            requestAnimationFrame(animate);
-            barns.forEach(b => { 
-                b.position.z += 2; 
-                if(b.position.z > 100) b.position.z = -4500; 
-            });
-            renderer.render(scene, camera);
+        // Collision with barn
+        if(Math.abs(b.position.z - horse.position.z) < 4 &&
+           Math.abs(b.position.x - horse.position.x) < 5){
+            gameOver();
+            return;
         }
+    }
 
-        document.getElementById('startBtn').onclick = () => {
-            document.getElementById('menu').style.display = 'none';
-            animate();
-        };
-    </script>
+    // Coinler
+    for(let i=coins.length-1; i>=0; i--){
+        let c = coins[i];
+        c.position.z += speed;
+        c.rotation.z += 0.05;
+
+        if(Math.abs(c.position.z - horse.position.z) < 3 &&
+           Math.abs(c.position.x - horse.position.x) < 3){
+            coinSound();
+            score += 50;
+            scoreBoard.innerText = "SKOR " + score;
+            
+            scene.remove(c);
+            coins.splice(i,1);
+        }
+        
+        if(c.position.z > 50){
+            scene.remove(c);
+            coins.splice(i,1);
+        }
+    }
+
+    // Kamera
+    camera.position.x += (horse.position.x * 0.6 - camera.position.x) * 0.1;
+    camera.position.z = horse.position.z + 12;
+    camera.lookAt(horse.position.x * 0.7, 3, horse.position.z - 30);
+
+    // Hız artışı
+    if(score > 0 && score % 500 === 0){
+        speed = Math.min(5, speed + 0.05);
+    }
+
+    renderer.render(scene, camera);
+}
+
+// Music
+musicBtn.onclick = () => {
+    initAudio();
+    musicEnabled = !musicEnabled;
+    musicBtn.innerText = musicEnabled ? "🔊" : "🔇";
+
+    if(musicEnabled && !musicTimer){
+        let melody = [262, 294, 330, 349, 392, 349, 330, 294];
+        let idx = 0;
+        musicTimer = setInterval(() => {
+            if(musicEnabled && gameRunning) play(melody[idx], 180);
+            idx = (idx + 1) % melody.length;
+        }, 280);
+    } else if(!musicEnabled && musicTimer){
+        clearInterval(musicTimer);
+        musicTimer = null;
+    }
+};
+
+// Start
+startBtn.onclick = () => {
+    initAudio();
+    menu.style.display = "none";
+    gameRunning = true;
+    resetGame();
+    animate();
+};
+
+restartBtn.onclick = () => {
+    gameOverScreen.style.display = "none";
+    resetGame();
+    gameRunning = true;
+};
+
+// Spawn coins
+setInterval(() => {
+    if(gameRunning) spawnCoin();
+}, 1200);
+
+// Resize
+window.addEventListener('resize', () => {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+});
+
+</script>
 </body>
 </html>
