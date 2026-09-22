@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Tasarım ve Yazılım Hizmetleri</title>
+    <title>Lezzet Durağı | Online Sipariş</title>
     <style>
         * {
             margin: 0;
@@ -28,12 +28,16 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .logo {
             font-size: 1.5rem;
             font-weight: bold;
-            color: #0066cc;
+            color: #d9381e;
+            text-decoration: none;
         }
 
         nav a {
@@ -41,21 +45,23 @@
             text-decoration: none;
             color: #555555;
             font-weight: 500;
+            transition: color 0.2s;
         }
 
         nav a:hover {
-            color: #0066cc;
+            color: #d9381e;
         }
 
         .hero {
-            padding: 80px 5%;
+            padding: 60px 5%;
             text-align: center;
-            background-color: #f9f9f9;
+            background-color: #fffaf0;
+            border-bottom: 1px solid #f0e6d2;
         }
 
         .hero h1 {
             font-size: 2.5rem;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             color: #222222;
         }
 
@@ -63,25 +69,42 @@
             font-size: 1.2rem;
             color: #666666;
             max-width: 700px;
-            margin: 0 auto 30px auto;
+            margin: 0 auto 25px auto;
         }
 
         .btn {
             display: inline-block;
             padding: 12px 30px;
-            background-color: #0066cc;
+            background-color: #25d366;
             color: #ffffff;
             text-decoration: none;
             border-radius: 5px;
             font-weight: bold;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #1eb854;
+        }
+
+        .menu-section {
+            padding: 50px 5%;
+        }
+
+        .menu-section h2 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2rem;
+            color: #222222;
         }
 
         .services {
-            padding: 60px 5%;
             display: flex;
-            justify-content: space-around;
+            justify-content: center;
             flex-wrap: wrap;
-            gap: 20px;
+            gap: 25px;
         }
 
         .service-card {
@@ -89,32 +112,74 @@
             border: 1px solid #e0e0e0;
             border-radius: 8px;
             padding: 25px;
-            width: 300px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            width: 280px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
         .service-card h3 {
+            margin-bottom: 12px;
+            color: #d9381e;
+            font-size: 1.3rem;
+        }
+
+        .service-card p {
+            font-size: 0.95rem;
+            color: #666666;
+            margin-bottom: 20px;
+        }
+
+        .price {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #222222;
             margin-bottom: 15px;
-            color: #0066cc;
+        }
+
+        .card-btn {
+            background-color: #333333;
+            color: #ffffff;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+        }
+
+        .card-btn:hover {
+            background-color: #d9381e;
         }
 
         footer {
             margin-top: auto;
-            background-color: #f1f1f1;
+            background-color: #f9f9f9;
             border-top: 1px solid #e0e0e0;
-            padding: 20px 5%;
+            padding: 25px 5%;
             text-align: center;
             font-size: 0.9rem;
             color: #666666;
         }
 
         .ip-info {
-            margin-top: 10px;
-            padding: 10px;
-            background-color: #e6f0fa;
-            border-radius: 4px;
+            margin-top: 15px;
+            padding: 12px 20px;
+            background-color: #fff0ed;
+            border: 1px solid #ffd4cc;
+            border-radius: 6px;
             display: inline-block;
-            color: #004080;
+            color: #d9381e;
             font-weight: 500;
         }
     </style>
@@ -122,38 +187,74 @@
 <body>
 
     <header>
-        <div class="logo">WebVizyon</div>
+        <a href="#" class="logo">Lezzet Durağı</a>
         <nav>
-            <a href="#">Ana Sayfa</a>
-            <a href="#">Hizmetler</a>
-            <a href="#">Hakkımızda</a>
-            <a href="#">İletişim</a>
+            <a href="#" onclick="alert('En alta kaydır')">Ana Sayfa</a>
+            <a href="#" onclick="alert('En alta kaydır')">Menü</a>
+            <a href="#" onclick="alert('En alta kaydır')">Hakkımızda</a>
+            <a href="#" onclick="alert('En alta kaydır')">İletişim</a>
         </nav>
     </header>
 
     <section class="hero">
-        <h1>Modern ve Profesyonel Web Siteleri Oluşturun</h1>
-        <p>İşletmenizi dijital dünyada öne çıkaracak hızlı güvenli ve kullanıcı dostu web tasarım çözümleri sunuyoruz</p>
-        <a href="#" class="btn">Hemen Başlayın</a>
+        <h1>Sıcak ve Taze Lezzetler Kapınızda</h1>
+        <p>Özel tariflerle hazırlanan nefis tost çeşitlerimizi ve atıştırmalıklarımızı hemen sipariş edin</p>
+        <a href="https://chat.whatsapp.com/Ivd5PaiJpPk9Vr6Wyp0ikK?s=cl&p=a&mlu=4&ilr=4" target="_blank" class="btn">Başla</a>
     </section>
 
-    <section class="services">
-        <div class="service-card">
-            <h3>Web Tasarım</h3>
-            <p>Mobil uyumlu modern ve estetik arayüz tasarımları ile markanızı en iyi şekilde yansıtın</p>
-        </div>
-        <div class="service-card">
-            <h3>Yazılım Geliştirme</h3>
-            <p>ihtiyaçlarınıza özel güvenli ve ölçeklenebilir web uygulamaları ve yönetim panelleri</p>
-        </div>
-        <div class="service-card">
-            <h3>SEO Optimizasyonu</h3>
-            <p>Arama motorlarında üst sıralara çıkmanız için güncel tekniklerle yapılan optimizasyon çalışmaları</p>
+    <section class="menu-section">
+        <h2>Popüler Menümüz</h2>
+        <div class="services">
+            
+            <div class="service-card">
+                <div>
+                    <h3>Pizza Tost</h3>
+                    <p>Özel domates sosu bol kaşar peyniri sucuk mısır ve zeytin içeriğiyle fırınlanmış lezzet</p>
+                </div>
+                <div>
+                    <div class="price">120 TL</div>
+                    <button class="card-btn" onclick="alert('Hasan\'a pizza tost al')">Sipariş Et</button>
+                </div>
+            </div>
+
+            <div class="service-card">
+                <div>
+                    <h3>Karışık Tost</h3>
+                    <p>Taze kaşar peyniri dana sucuk ve özel tereyağı ile ızgarada pişirilmiş klasik lezzet</p>
+                </div>
+                <div>
+                    <div class="price">90 TL</div>
+                    <button class="card-btn" onclick="alert('En alta kaydır')">Sipariş Et</button>
+                </div>
+            </div>
+
+            <div class="service-card">
+                <div>
+                    <h3>Ayvalık Tostu</h3>
+                    <p>Bol malzemeli özel Ayvalık ekmeğinde amerikan salatası turşu ve şarküteri ürünleri</p>
+                </div>
+                <div>
+                    <div class="price">140 TL</div>
+                    <button class="card-btn" onclick="alert('En alta kaydır')">Sipariş Et</button>
+                </div>
+            </div>
+
+            <div class="service-card">
+                <div>
+                    <h3>Soğuk İçecekler</h3>
+                    <p>Yemeğinin yanında buz gibi kutu meşrubatlar ve taze sıkılmış meyve suları</p>
+                </div>
+                <div>
+                    <div class="price">35 TL</div>
+                    <button class="card-btn" onclick="alert('En alta kaydır')">Sipariş Et</button>
+                </div>
+            </div>
+
         </div>
     </section>
 
     <footer>
-        <p>&copy; 2026 WebVizyon Tüm Hakları Saklıdır</p>
+        <p>&copy; 2026 Lezzet Durağı Tüm Hakları Saklıdır</p>
         <div class="ip-info" id="user-info">
             Bağlantı bilgileri yükleniyor
         </div>
